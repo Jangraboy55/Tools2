@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pro Calc Suite</title>
+<meta name="description" content="Professional multi-calculator suite: standard, scientific, age, EMI, BMI, tip & split. Responsive with dark mode.">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<style>
+  :root{
+    --bg:#0e1117; --panel:#121826; --panel-2:#0f1522;
+    --text:#e6eefc; --muted:#9db0d4; --stroke:rgba(255,255,255,0.08);
+    --brand:#5b9dff; --brand-2:#7cf7c9; --ok:#41d39a; --warn:#ffb454; --err:#ff6b6b;
+    --radius:14px; --shadow:0 10px 30px rgba(0,0,0,.45);
+  }
+  [data-theme="light"]{
+    --bg:#f6f8fc; --panel:#ffffff; --panel-2:#eef2fb;
+    --text:#0d1424; --muted:#4c5c7f; --stroke:rgba(0,0,0,0.08);
+    --shadow:0 10px 30px rgba(0,0,0,.08);
+  }
+  *{box-sizing:border-box} html,body{height:100%}
+  body{
+    margin:0; font:15px/1.6 system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial;
+    background:
+      radial-gradient(1000px 600px at 85% -20%, rgba(91,157,255,.22), transparent 60%),
+      radial-gradient(900px 600px at -10% 10%, rgba(124,247,201,.18), transparent 60%),
+      var(--bg);
+    color:var(--text); display:grid; grid-template-rows:auto 1fr; overflow-x:hidden;
+  }
+  header{
+    position:sticky; top:0; z-index:20; border-bottom:1px solid var(--stroke);
+    backdrop-filter: blur(10px) saturate(1.2);
+    background:linear-gradient(180deg, rgba(0,0,0,.35), transparent);
+  }
+  .bar{max-width:1200px; margin:0 auto; padding:14px 16px; display:flex; align-items:center; gap:16px; justify-content:space-between}
+  .brand{display:flex; align-items:center; gap:12px; font-weight:800}
+  .logo{width:34px; height:34px; border-radius:10px; background:conic-gradient(from 120deg, var(--brand), var(--brand-2))}
+  .actions{display:flex; gap:10px; align-items:center}
+  .btn{appearance:none; border:1px solid var(--stroke); color:var(--text);
+    background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(0,0,0,.15));
+    padding:10px 14px; border-radius:12px; cursor:pointer; box-shadow:var(--shadow);
+    transition:transform .06s, background .2s}
+  .btn:hover{transform:translateY(-1px)}
+  .btn.primary{border-color:transparent; background:linear-gradient(180deg, var(--brand), #3d7df8); color:#fff}
+  .toggle{width:48px; height:30px; border-radius:999px; position:relative; border:1px solid var(--stroke); background:var(--panel); cursor:pointer}
+  .toggle .dot{position:absolute; top:3px; left:3px; width:24px; height:24px; border-radius:50%; background:linear-gradient(180deg,#fff,#dbe6ff); transition:left .2s; box-shadow:0 6px 16px rgba(0,0,0,.25)}
+  [data-theme="light"] .toggle .dot{left:21px}
+
+  main{max-width:1200px; margin:18px auto; padding:0 16px; display:grid; grid-template-columns:260px 1fr; gap:16px}
+  @media (max-width:980px){ main{grid-template-columns:1fr} }
+  nav{
+    background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(0,0,0,.18));
+    border:1px solid var(--stroke); border-radius:14px; padding:14px; box-shadow:var(--shadow);
+    position:sticky; top:72px; align-self:start
+  }
+  .nav-title{margin:0 6px 10px; font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:.7px}
+  .tool{display:flex; align-items:center; gap:10px; padding:10px 12px; margin:6px 0; border-radius:10px; cursor:pointer; border:1px solid transparent; transition:background .2s, transform .06s}
+  .tool:hover{transform:translateX(2px)}
+  .tool[aria-current="page"]{background:linear-gradient(180deg, rgba(91,157,255,.18), rgba(124,247,201,.12)); border-color:rgba(255,255,255,.12)}
+  .icon{width:22px; height:22px; border-radius:6px; background:radial-gradient(circle at 30% 30%, #fff6, transparent 60%), conic-gradient(from 120deg, var(--brand), var(--brand-2))}
+
+  .panel{
+    background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(0,0,0,.18));
+    border:1px solid var(--stroke); border-radius:14px; box-shadow:var(--shadow); padding:20px}
+  h1{margin:4px 0 8px; font-size:24px} .sub{color:var(--muted); margin-top:0}
+
+  .grid{display:grid; gap:12px; grid-template-columns:repeat(2, minmax(220px,1fr))}
+  @media (max-width:720px){ .grid{grid-template-columns:1fr} }
+
+  .calc{
+    background:var(--panel-2); border:1px solid var(--stroke); border-radius:12px; padding:12px;
+  }
+  .display{
+    background:var(--panel); border:1px solid var(--stroke); border-radius:10px; padding:12px; font-size:20px; word-wrap:break-word; min-height:54px
+  }
+  .display .small{font-size:12px; color:var(--muted)}
+  .keys{display:grid; gap:8px; grid-template-columns:repeat(4, 1fr); margin-top:12px}
+  .k{padding:12px; border-radius:10px; border:1px solid var(--stroke); cursor:pointer; text-align:center;
+    background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(0,0,0,.15)); user-select:none; transition:transform .06s, filter .15s}
+  .k:active{transform:translateY(1px); filter:brightness(0.95)}
+  .k.op{color:var(--brand-2)}
+  .k.eq{grid-column:span 2; background:linear-gradient(180deg, var(--brand), #3f7bf7); color:#fff; border-color:transparent}
+  .row{display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:10px}
+  .field{display:grid; gap:6px; flex:1; min-width:160px}
+  .label{font-size:12px; color:var(--muted)}
+  input[type="number"], input[type="text"], select{
+    padding:10px 12px; border-radius:10px; border:1px solid var(--stroke); background:var(--panel); color:var(--text)
+  }
+  .result{border:1px dashed var(--stroke); padding:10px; border-radius:10px; color:var(--text)}
+  .muted{color:var(--muted)}
+  .pill{font-size:12px; padding:6px 10px; border-radius:999px; border:1px solid var(--stroke); background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(0,0,0,.15)); color:var(--text)}
+  .list{margin:8px 0 0; padding-left:16px}
+  .hr{height:1px; background:var(--stroke); margin:10px 0}
+</style>
+</head>
+<body>
+  <header>
+    <div class="bar">
+      <div class="brand"><div class="logo"></div><div>Pro Calc Suite</div></div>
+      <div class="actions">
+        <button id="copyResult" class="btn" title="Copy active result">Copy</button>
+        <div id="themeToggle" class="toggle" role="switch" aria-checked="false" aria-label="Toggle theme"><div class="dot"></div></div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <nav aria-label="Calculator navigation">
+      <div class="nav-title">Calculators</div>
+      <div id="navList"></div>
+    </nav>
+
+    <section class="panel" id="panel">
+      <h1 id="title">Standard & Scientific</h1>
+      <p class="sub" id="subtitle">A clean, powerful calculator with history, memory, and deg/rad trig.</p>
+
+      <div id="content">
+        <!-- Filled dynamically -->
+      </div>
+    </section>
+  </main>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  // Theme
+  const saved = localStorage.getItem('theme') || 'dark';
+  document.body.setAttribute('data-theme', saved);
+  const themeToggle = document.getElementById('themeToggle');
+  themeToggle.setAttribute('aria-checked', saved === 'light');
+  themeToggle.addEventListener('click', () => {
+    const next = document.body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    document.body.setAttribute('data-theme', next);
+    themeToggle.setAttribute('aria-checked', next === 'light');
+    localStorage.setItem('theme', next);
+  });
+
+  // Utilities
+  const $ = (q, el=document) => el.querySelector(q);
+  const el = (t, attrs={}, ...kids) => {
+    const e = document.createElement(t);
+    for (const [k,v] of Object.entries(attrs)) {
+      if (k === 'class') e.className = v;
+      else if (k === 'dataset') for (const [dk,dv] of Object.entries(v)) e.dataset[dk] = dv;
+      else if (k.startsWith('on')) e.addEventListener(k.slice(2), v);
+      else e.setAttribute(k, v);
+    }
+    kids.flat().filter(Boolean).forEach(k => e.append(k.nodeType ? k : document.createTextNode(k)));
+    return e;
+  };
+  const copyText = async (t) => { try { await navigator.clipboard.writeText(t); toast('Copied'); } catch { toast('Copy failed'); } };
+  const fmt = n => (Math.abs(n) >= 1e9 || (Math.abs(n) > 0 && Math.abs(n) < 1e-6)) ? n.toExponential(6) : String(+Number(n).toPrecision(12));
+
+  // Toast
+  let toastTimer;
+  const toast = (msg) => {
+    clearTimeout(toastTimer);
+    let t = $('#__toast');
+    if (!t) { t = el('div', { id:'__toast', class:'pill', style:'position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:9999;opacity:0;transition:opacity .2s' }); document.body.append(t); }
+    t.textContent = msg; t.style.opacity = '1';
+    toastTimer = setTimeout(()=> t.style.opacity = '0', 1400);
+  };
+
+  // Navigation + registry
+  const title = $('#title'), subtitle = $('#subtitle'), content = $('#content'), navList = $('#navList');
+  const registry = {
+    standard: {
+      label: 'Standard & Scientific',
+      desc: 'A clean, powerful calculator with history, memory, and deg/rad trig.',
+      mount: mountStandard
+    },
+    age: {
+      label: 'Age',
+      desc: 'Precise age in years, months, days with next birthday countdown.',
+      mount: mountAge
+    },
+    emi: {
+      label: 'EMI',
+      desc: 'Monthly EMI, total interest, and total payment.',
+      mount: mountEMI
+    },
+    bmi: {
+      label: 'BMI',
+      desc: 'Body Mass Index with category (kg/cm or lb/in).',
+      mount: mountBMI
+    },
+    tip: {
+      label: 'Tip & Split',
+      desc: 'Bill tip calculator with per-person split.',
+      mount: mountTip
+    }
+  };
+
+  // Build navigation
+  let activeKey = 'standard';
+  function renderNav() {
+    navList.innerHTML = '';
+    Object.keys(registry).forEach((key, i) => {
+      const item = el('div', { class:'tool', dataset:{tool:key}, 'aria-current': key===activeKey?'page':'false', tabindex:'0',
+        onclick: () => switchTool(key, item),
+        onkeypress: (e) => { if (e.key === 'Enter') switchTool(key, item); }
+      }, el('div',{class:'icon'}), registry[key].label);
+      navList.append(item);
+    });
+  }
+  function switchTool(key, btnEl) {
+    activeKey = key;
+    document.querySelectorAll('.tool').forEach(n=> n.setAttribute('aria-current','false'));
+    if (btnEl) btnEl.setAttribute('aria-current','page');
+    title.textContent = registry[key].label;
+    subtitle.textContent = registry[key].desc;
+    content.innerHTML = '';
+    registry[key].mount(content);
+  }
+
+  // Copy active result
+  $('#copyResult').addEventListener('click', () => {
+    const out = content.querySelector('[data-copy-focus]');
+    if (!out) return toast('Nothing to copy');
+    const txt = out.innerText || out.value || '';
+    if (txt.trim()) copyText(txt.trim()); else toast('Nothing to copy');
+  });
+
+  // Mount: Standard/Scientific Calculator
+  function mountStandard(root){
+    const state = {
+      expr: '',
+      lastAns: 0,
+      deg: true,
+      memory: 0,
+      history: []
+    };
+
+    const wrap = el('div', { class:'calc' });
+    const display = el('div', { class:'display', 'data-copy-focus': '1' },
+      el('div', { class:'small', id:'hist' }, ''),
+      el('div', { id:'expr' }, '0')
+    );
+
+    const topRow = el('div', { class:'row' },
+      el('span', { class:'pill', id:'mode', onclick:()=>{ state.deg=!state.deg; mode.textContent = state.deg ? 'Mode: DEG' : 'Mode: RAD'; toast(state.deg?'Degrees':'Radians'); } }, 'Mode: DEG'),
+      el('span', { class:'pill', id:'mem' }, 'M: 0'),
+      el('span', { class:'pill', id:'ans' }, 'Ans: 0')
+    );
+
+    const grid = el('div', { class:'keys', style:'grid-template-columns:repeat(6,1fr)' });
+
+    // Button layout
+    const keys = [
+      ['MC','MR','M+','M-','⌫','AC'],
+      ['(',')','x²','xʸ','√','÷'],
+      ['7','8','9','×','%','1/x'],
+      ['4','5','6','-','±','e'],
+      ['1','2','3','+','π','mod'],
+      ['0','.','sin','cos','tan','=']
+    ];
+
+    keys.forEach(row => row.forEach(k => {
+      const btn = el('div', { class:'k' + (isOp(k)?' op':''), onclick: () => press(k) }, k);
+      if (k === '=') btn.classList.add('eq');
+      grid.append(btn);
+    }));
+
+    // Keyboard support
+    window.addEventListener('keydown', (e) => {
+      if (!content.contains(wrap)) return; // only active panel
+      const map = { '*':'×', '/':'÷', 'Enter':'=', 'Backspace':'⌫' };
+      const key = map[e.key] || e.key;
+      const allow = '0123456789.+-()';
+      if (key in map || allow.includes(key) || ['=','⌫'].includes(key)) {
+        e.preventDefault();
+      }
+      if (allow.includes(key)) press(key);
+      else if (['*','/'].includes(e.key)) press(map[e.key]);
+      else if (e.key === 'Enter') press('=');
+      else if (e.key === 'Backspace') press('⌫');
+    });
+
+    function isOp(k){ return '÷×-+%=√'.includes(k) || ['sin','cos','tan','x²','xʸ','1/x','mod','±'].includes(k); }
+
+    function press(k){
+      if (k === 'AC'){ state.expr=''; render(); return; }
+      if (k === '⌫'){ state.expr = state.expr.slice(0,-1); render(); return; }
+      if (k === '='){ compute(); return; }
+      if (k === 'π'){ state.expr += 'π'; render(); return; }
+      if (k === 'e'){ state.expr += 'e'; render(); return; }
+      if (k === 'x²'){ state.expr += '^2'; render(); return; }
+      if (k === 'xʸ'){ state.expr += '^'; render(); return; }
+      if (k === '√'){ state.expr += '√('; render(); return; }
+      if (k === '1/x'){ state.expr += '1/('; render(); return; }
+      if (k === '±'){
+        // toggle sign on last number
+        const m = state.expr.match(/(\d+(\.\d+)?)$/);
+        if (m){ const s = m[0]; state.expr = state.expr.slice(0, -s.length) + '(-' + s + ')'; }
+        else { state.expr = '(-' + (state.expr||'0') + ')'; }
+        render(); return;
+      }
+      if (['sin','cos','tan'].includes(k)){
+        state.expr += k + '('; render(); return;
+      }
+      if (k === 'MR'){ state.expr += state.memory.toString(); render(); return; }
+      if (k === 'MC'){ state.memory = 0; mem.textContent = 'M: 0'; toast('Memory cleared'); return; }
+      if (k === 'M+'){ const cur = safeEval(state.expr || '0'); state.memory += cur||0; mem.textContent = 'M: ' + fmt(state.memory); toast('Added to M'); return; }
+      if (k === 'M-'){ const cur = safeEval(state.expr || '0'); state.memory -= cur||0; mem.textContent = 'M: ' + fmt(state.memory); toast('Subtracted from M'); return; }
+
+      // Default character append
+      state.expr += k;
+      render();
+    }
+
+    function sanitizeExpr(expr){
+      // Replace calculator symbols with JS/Math
+      let s = expr;
+      s = s.replace(/π/g, 'Math.PI').replace(/\be\b/g, 'Math.E');
+      s = s.replace(/÷/g, '/').replace(/×/g, '*').replace(/mod/g, '%');
+      // Percent as /100 for standalone numbers or trailing %
+      s = s.replace(/(\d+(\.\d+)?)%/g, '($1/100)');
+      // sqrt and powers
+      s = s.replace(/√\(/g, 'Math.sqrt(');
+      // trig: sin( cos( tan(
+      if (state.deg) {
+        s = s.replace(/sin\(/g, 'Math.sin(Math.PI/180*');
+        s = s.replace(/cos\(/g, 'Math.cos(Math.PI/180*');
+        s = s.replace(/tan\(/g, 'Math.tan(Math.PI/180*');
+      } else {
+        s = s.replace(/sin\(/g, 'Math.sin(');
+        s = s.replace(/cos\(/g, 'Math.cos(');
+        s = s.replace(/tan\(/g, 'Math.tan(');
+      }
+      // power ^
+      s = s.replace(/(\))\^(\()/g, '$1**$2');
+      s = s.replace(/(\d+(\.\d+)?)\^(\d+(\.\d+)?)/g, '($1**$3)');
+      s = s.replace(/(\d+(\.\d+)?)\^(\()/g, '($1**$3)');
+      s = s.replace(/(\))\^(\d+(\.\d+)?)/g, '($1**$2)');
+      return s;
+    }
+
+    function safeEval(expr){
+      try{
+        const s = sanitizeExpr(expr || '0');
+        // Allow only safe chars
+        if (!/^[\d+\-*/%^().,\sMathPIEasincoztanhqrt]*$/.test(s)) return NaN;
+        // eslint-disable-next-line no-new-func
+        const val = Function(`"use strict"; return (${s});`)();
+        return Number(val);
+      }catch{ return NaN; }
+    }
+
+    function compute(){
+      const val = safeEval(state.expr);
+      if (!isFinite(val) || isNaN(val)){ toast('Error'); return; }
+      const shown = fmt(val);
+      state.history.unshift(`${state.expr || '0'} = ${shown}`);
+      if (state.history.length > 5) state.history.pop();
+      state.lastAns = val;
+      ans.textContent = 'Ans: ' + shown;
+      state.expr = shown;
+      render();
+    }
+
+    function render(){
+      expr.textContent = state.expr || '0';
+      hist.textContent = state.history.join('  •  ');
+    }
+
+    wrap.append(display, topRow, grid);
+
+    // Attach and refs
+    root.append(wrap);
+    const hist = $('#hist', wrap), expr = $('#expr', wrap), mode = $('#mode', wrap), mem = $('#mem', wrap), ans = $('#ans', wrap);
+    render();
+  }
+
+  // Mount: Age Calculator
+  function mountAge(root){
+    const wrap = el('div', { class:'calc' });
+    const row = el('div', { class:'row' },
+      el('div', { class:'field' }, el('div',{class:'label'}, 'Date of birth'), el('input',{type:'date', id:'dob'})),
+      el('div', { class:'field' }, el('div',{class:'label'}, 'As of date'), el('input',{type:'date', id:'asof'})),
+      el('div', { class:'field' }, el('div',{class:'label'}, ' '), el('button',{class:'btn primary', onclick:calc}, 'Calculate'))
+    );
+    const out = el('div', { class:'result', 'data-copy-focus':'1', id:'ageOut' }, 'Enter your DOB to see results.');
+    wrap.append(row, el('div',{class:'hr'}), out);
+    root.append(wrap);
+
+    $('#asof', wrap).value = new Date().toISOString().slice(0,10);
+
+    function calc(){
+      const dob = new Date($('#dob', wrap).value);
+      const asof = new Date($('#asof', wrap).value || new Date());
+      if (isNaN(dob.getTime())) { toast('Please select a valid DOB'); return; }
+      if (asof < dob) { toast('As of date must be after DOB'); return; }
+      // Years, months, days
+      let y = asof.getFullYear() - dob.getFullYear();
+      let m = asof.getMonth() - dob.getMonth();
+      let d = asof.getDate() - dob.getDate();
+      if (d < 0) {
+        const prevMonth = new Date(asof.getFullYear(), asof.getMonth(), 0).getDate();
+        d += prevMonth; m -= 1;
+      }
+      if (m < 0) { m += 12; y -= 1; }
+      // Next birthday
+      const nextBD = new Date(asof.getFullYear(), dob.getMonth(), dob.getDate());
+      if (nextBD < asof) nextBD.setFullYear(asof.getFullYear()+1);
+      const daysToBD = Math.ceil((nextBD - asof)/(1000*60*60*24));
+      const totalDays = Math.floor((asof - dob)/(1000*60*60*24));
+      $('#ageOut', wrap).innerHTML =
+        `Age: <b>${y}</b> years, <b>${m}</b> months, <b>${d}</b> days
+         <br>Days lived: <b>${totalDays}</b>
+         <br>Next birthday in: <b>${daysToBD}</b> days (${nextBD.toDateString()})`;
+    }
+  }
+
+  // Mount: EMI Calculator
+  function mountEMI(root){
+    const wrap = el('div', { class:'calc' });
+    const row = el('div', { class:'row' },
+      el('div', { class:'field' }, el('div',{class:'label'}, 'Principal (₹)'), el('input',{type:'number', id:'p', min:'0', step:'0.01', placeholder:'e.g., 500000'})),
+      el('div', { class:'field' }, el('div',{class:'label'}, 'Annual rate (%)'), el('input',{type:'number', id:'r', min:'0', step:'0.01', placeholder:'e.g., 8.5'})),
+      el('div', { class:'field' }, el('div',{class:'label'}, 'Tenure (months)'), el('input',{type:'number', id:'n', min:'1', step:'1', placeholder:'e.g., 240'})),
+      el('div', { class:'field' }, el('div',{class:'label'}, ' '), el('button',{class:'btn primary', onclick:calc}, 'Calculate'))
+    );
+    const out = el('div', { class:'result', 'data-copy-focus':'1', id:'emiOut' }, 'Enter loan details to see EMI.');
+    wrap.append(row, el('div',{class:'hr'}), out);
+    root.append(wrap);
+
+    function rup(n){ return '₹ ' + (+n).toLocaleString(undefined, { maximumFractionDigits:2 }); }
+
+    function calc(){
+      const P = parseFloat($('#p', wrap).value);
+      const R = parseFloat($('#r', wrap).value);
+      const N = parseInt($('#n', wrap).value, 10);
+      if (!(P>0 && R>=0 && N>0)) { toast('Enter valid P, R, N'); return; }
+      const r = R/12/100;
+      const x = Math.pow(1+r, N);
+      const EMI = r === 0 ? P/N : (P*r*x)/(x-1);
+      const total = EMI*N;
+      const interest = total - P;
+      $('#emiOut', wrap).innerHTML
