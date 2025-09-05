@@ -1,0 +1,418 @@
+<!DOCTYPE html><html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ZuckCalc — All‑in‑One Pro Calculator</title>
+  <meta name="description" content="A modern, responsive, multi‑calculator suite in a single HTML file. Includes Standard, Scientific, Unit Converter, BMI, EMI, Age, GST, Discount, Percentage, and Date‑Diff calculators with animations, history, theming, and offline illustrations." />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Ccircle cx='128' cy='128' r='120' fill='%2300aaff'/%3E%3Cpath d='M60 170c20 26 60 30 86 10 24-18 30-52 18-78-13-29-49-45-80-32' stroke='%23fff' stroke-width='18' fill='none' stroke-linecap='round'/%3E%3Ccircle cx='98' cy='110' r='10' fill='%23fff'/%3E%3Ccircle cx='158' cy='134' r='10' fill='%23fff'/%3E%3C/svg%3E" />
+  <style>
+    :root{
+      --bg: #0b1220;
+      --panel:#0f172a;
+      --soft:#121c32;
+      --text:#e5e7eb;
+      --muted:#94a3b8;
+      --brand:#3b82f6;
+      --accent:#22d3ee;
+      --good:#22c55e;
+      --warn:#f59e0b;
+      --bad:#ef4444;
+      --ring: 0 0 0 2px rgba(59,130,246,.45),0 10px 25px -10px rgba(59,130,246,.45);
+    }
+    [data-theme="light"]{
+      --bg:#f8fafc; --panel:#ffffff; --soft:#eef2ff; --text:#0f172a; --muted:#475569; --brand:#2563eb; --accent:#06b6d4;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; font: 16px/1.4 system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      background:linear-gradient(180deg,var(--bg),#060a14 40%);
+      color:var(--text);
+    }
+    .app{
+      display:grid; grid-template-columns: 300px 1fr; min-height:100dvh;
+    }
+    aside{
+      position:sticky; top:0; height:100dvh; padding:16px; border-right:1px solid rgba(148,163,184,.15);
+      background:linear-gradient(180deg,var(--panel),var(--soft));
+    }
+    .brand{
+      display:flex; align-items:center; gap:12px; padding:12px; border-radius:16px; background:linear-gradient(135deg,rgba(34,211,238,.08),rgba(59,130,246,.08));
+      box-shadow: inset 0 0 0 1px rgba(148,163,184,.15), 0 8px 24px -16px rgba(2,8,23,.6);
+    }
+    .brand svg{width:36px;height:36px}
+    .brand h1{font-size:18px; margin:0}
+    .search{margin:14px 0 8px; position:relative}
+    .search input{
+      width:100%; padding:12px 40px 12px 14px; border:1px solid rgba(148,163,184,.25); border-radius:12px; background:rgba(2,6,23,.3);
+      color:var(--text); outline:none; transition:.2s;
+    }
+    .search input:focus{box-shadow:var(--ring); border-color:transparent}
+    .search .icon{position:absolute; right:12px; top:50%; transform:translateY(-50%); opacity:.7}
+    .nav{
+      display:flex; flex-direction:column; gap:8px; margin-top:8px; padding-right:4px; overflow:auto; max-height:calc(100dvh - 210px);
+    }
+    .nav button{
+      display:flex; align-items:center; gap:10px; width:100%; padding:12px; border:1px solid rgba(148,163,184,.18); border-radius:12px; background:linear-gradient(180deg,var(--panel),rgba(2,6,23,.25));
+      color:var(--text); text-align:left; cursor:pointer; transition:.2s; position:relative;
+    }
+    .nav button:hover{transform:translateY(-1px); box-shadow:0 8px 22px -18px rgba(2,8,23,.8)}
+    .nav button.active{outline:2px solid rgba(34,211,238,.35)}
+    .nav small{color:var(--muted)}
+    .footer{
+      position:absolute; left:16px; right:16px; bottom:16px; display:flex; gap:8px; align-items:center; justify-content:space-between;
+    }
+    .chip{padding:8px 12px; border-radius:999px; font-size:12px; background:rgba(34,197,94,.15); border:1px solid rgba(34,197,94,.25)}
+    .toggle{appearance:none; width:56px; height:32px; background:rgba(148,163,184,.25); border-radius:999px; position:relative; outline:none; cursor:pointer; border:1px solid rgba(148,163,184,.3)}
+    .toggle:before{content:""; position:absolute; width:26px; height:26px; left:2px; top:2px; background:#fff; border-radius:50%; transition:.23s;}
+    [data-theme="light"] .toggle:before{transform:translateX(24px)}main{padding:20px 24px; display:grid; grid-template-rows:auto 1fr}
+header.top{
+  display:flex; gap:12px; align-items:center; justify-content:space-between; flex-wrap:wrap;
+}
+.title{display:flex; align-items:center; gap:12px}
+.title h2{margin:0}
+.actions{display:flex; gap:8px; align-items:center}
+.btn{
+  padding:10px 14px; border-radius:12px; border:1px solid rgba(148,163,184,.2); background:linear-gradient(180deg,var(--panel),rgba(2,6,23,.2)); color:var(--text); cursor:pointer; transition:.2s;
+}
+.btn:hover{transform:translateY(-1px)}
+.btn.primary{background:linear-gradient(180deg,var(--brand),#1d4ed8); border-color:transparent}
+.grid{display:grid; gap:16px; grid-template-columns:repeat(12,1fr)}
+.card{grid-column: span 12; padding:16px; border-radius:18px; background:linear-gradient(180deg,var(--panel),rgba(2,6,23,.2)); border:1px solid rgba(148,163,184,.15); box-shadow: 0 10px 30px -20px rgba(2,8,23,.8)}
+@media(min-width:900px){ .card.half{grid-column: span 6} }
+.card h3{margin:0 0 8px}
+.muted{color:var(--muted)}
+
+.display{font-size:32px; padding:12px; border-radius:14px; background:rgba(2,6,23,.35); border:1px solid rgba(148,163,184,.2); overflow:auto}
+.keypad{display:grid; grid-template-columns:repeat(4,1fr); gap:10px}
+.key{padding:14px; border-radius:14px; border:1px solid rgba(148,163,184,.2); background:linear-gradient(180deg,rgba(2,6,23,.35),rgba(2,6,23,.15)); cursor:pointer; text-align:center; font-weight:600; transition:.15s}
+.key:hover{transform:translateY(-1px)}
+.key.brand{background:linear-gradient(180deg,var(--brand),#1d4ed8); border-color:transparent}
+.key.accent{background:linear-gradient(180deg,var(--accent),#0891b2); border-color:transparent}
+
+.pill{
+  display:inline-flex; gap:8px; align-items:center; padding:8px 12px; border-radius:999px; background:rgba(59,130,246,.15); border:1px solid rgba(59,130,246,.25); font-size:12px
+}
+
+.section{display:none}
+.section.active{display:block; animation:fadeIn .25s ease}
+@keyframes fadeIn{from{opacity:0; transform:translateY(6px)} to{opacity:1; transform:none}}
+
+.row{display:grid; gap:10px; grid-template-columns:repeat(12,1fr); align-items:end}
+.row .field{grid-column: span 12}
+@media(min-width:840px){.row .field.half{grid-column:span 6}}
+.field label{display:block; font-size:12px; color:var(--muted); margin:0 0 6px}
+.field input, .field select{
+  width:100%; padding:12px; border-radius:12px; border:1px solid rgba(148,163,184,.25); background:rgba(2,6,23,.25); color:var(--text); outline:none; transition:.2s
+}
+.field input:focus, .field select:focus{box-shadow:var(--ring); border-color:transparent}
+
+.illus{display:flex; gap:10px; flex-wrap:wrap}
+.illus svg{width:56px; height:56px; filter:drop-shadow(0 6px 18px rgba(2,8,23,.5))}
+
+.history{max-height:240px; overflow:auto; border-radius:12px; border:1px solid rgba(148,163,184,.2); padding:8px}
+.history div{display:flex; justify-content:space-between; gap:8px; padding:8px; border-bottom:1px dashed rgba(148,163,184,.18)}
+
+.note{font-size:12px; color:var(--muted)}
+
+  </style>
+</head>
+<body>
+  <div class="app" id="app" data-theme="dark">
+    <aside>
+      <div class="brand">
+        <svg viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#22d3ee"/><stop offset="1" stop-color="#3b82f6"/></linearGradient></defs><circle cx="128" cy="128" r="118" fill="url(#g)"/><path d="M70 168c24 30 70 35 100 12 28-21 35-62 21-93-15-35-57-54-92-38" stroke="#fff" stroke-width="18" fill="none" stroke-linecap="round"/><circle cx="98" cy="110" r="10" fill="#fff"/><circle cx="164" cy="138" r="10" fill="#fff"/></svg>
+        <div>
+          <h1>ZuckCalc</h1>
+          <div class="muted">All‑in‑one smart calculators</div>
+        </div>
+      </div>
+      <div class="search">
+        <input id="search" placeholder="Search calculators… (e.g., EMI)" />
+        <svg class="icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm10 2-5.2-5.2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </div>
+      <div class="nav" id="nav"></div>
+      <div class="footer">
+        <span class="chip" id="calcCount">10 tools</span>
+        <label title="Toggle light / dark">
+          <input type="checkbox" class="toggle" id="themeToggle" />
+        </label>
+      </div>
+    </aside>
+    <main>
+      <header class="top">
+        <div class="title">
+          <span class="pill"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 3v18M3 12h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> Multi‑calculator suite</span>
+          <h2 id="sectionTitle">Standard Calculator</h2>
+        </div>
+        <div class="actions">
+          <button class="btn" id="clearHistory">Clear History</button>
+          <button class="btn primary" id="share">Share Result</button>
+        </div>
+      </header><div class="grid" id="sections">
+    <!-- Sections will be injected here by JS -->
+  </div>
+</main>
+
+  </div>  <script>
+  // "Acting as Mark" voice for fun 🧠
+  const Zuck = {
+    say: (msg) => console.log("[ZuckCalc] ", msg)
+  }
+
+  // ====== Utilities ======
+  const $ = (sel, ctx=document) => ctx.querySelector(sel);
+  const $$ = (sel, ctx=document) => Array.from(ctx.querySelectorAll(sel));
+  const fmt = (n, digits=8) => {
+    if(Number.isNaN(n) || !Number.isFinite(n)) return '—';
+    const str = Number(n).toPrecision(digits);
+    return (Number(str)).toString();
+  }
+  const clamp = (n, a, b)=> Math.max(a, Math.min(b, n));
+  const daysInMonth = (y,m)=> new Date(y,m,0).getDate();
+  const store = {
+    get(k, d=null){ try{ return JSON.parse(localStorage.getItem(k)) ?? d } catch{ return d } },
+    set(k, v){ localStorage.setItem(k, JSON.stringify(v)) }
+  }
+
+  // ====== App State ======
+  const state = {
+    theme: store.get('theme','dark'),
+    history: store.get('history',[]),
+    current: 'standard'
+  }
+
+  // ====== Calculators Registry ======
+  const calculators = [
+    { id:'standard', name:'Standard', desc:'Basic + memory', icon:'➕', render: renderStandard },
+    { id:'scientific', name:'Scientific', desc:'Trig, exp, π, e', icon:'🧪', render: renderScientific },
+    { id:'unit', name:'Unit Converter', desc:'Length • Weight • Temp', icon:'📏', render: renderUnit },
+    { id:'bmi', name:'BMI', desc:'Body Mass Index', icon:'⚖️', render: renderBMI },
+    { id:'emi', name:'EMI', desc:'Loan payment', icon:'🏦', render: renderEMI },
+    { id:'age', name:'Age', desc:'Years • Months • Days', icon:'🎂', render: renderAge },
+    { id:'percent', name:'Percentage', desc:'% of • increase • decrease', icon:'📈', render: renderPercent },
+    { id:'gst', name:'GST', desc:'Add/Remove GST (IN)', icon:'💰', render: renderGST },
+    { id:'discount', name:'Discount', desc:'MRP • sale price • save', icon:'🏷️', render: renderDiscount },
+    { id:'datediff', name:'Date Difference', desc:'Between dates', icon:'🗓️', render: renderDateDiff },
+  ];
+
+  // ====== Mount Nav ======
+  function mountNav(){
+    const nav = $('#nav');
+    nav.innerHTML = '';
+    calculators.forEach(c => {
+      const btn = document.createElement('button');
+      btn.dataset.id = c.id;
+      btn.innerHTML = `<span style="font-size:18px">${c.icon}</span>
+        <div><div style="font-weight:700">${c.name}</div><small>${c.desc}</small></div>`;
+      btn.addEventListener('click', ()=>showSection(c.id));
+      nav.appendChild(btn);
+    });
+    updateNavActive();
+  }
+  function updateNavActive(){
+    $$('#nav button').forEach(b=> b.classList.toggle('active', b.dataset.id===state.current));
+  }
+
+  // ====== Sections ======
+  function mountSections(){
+    const container = $('#sections');
+    container.innerHTML = '';
+
+    calculators.forEach(c => {
+      const sec = document.createElement('section');
+      sec.id = `sec-${c.id}`; sec.className = 'section';
+      sec.innerHTML = c.render();
+      container.appendChild(sec);
+    });
+    showSection(state.current);
+  }
+
+  function showSection(id){
+    state.current = id; store.set('current', id);
+    $$('#sections .section').forEach(s=> s.classList.remove('active'));
+    $(`#sec-${id}`).classList.add('active');
+    $('#sectionTitle').textContent = calculators.find(x=>x.id===id).name + ' Calculator';
+    updateNavActive();
+  }
+
+  // ====== History & Share ======
+  function pushHistory(entry){
+    state.history.unshift({ ...entry, t: new Date().toLocaleString() });
+    state.history = state.history.slice(0, 50);
+    store.set('history', state.history);
+    renderHistory();
+  }
+  function renderHistory(){
+    let box = $('#historyBox'); if(!box) return;
+    box.innerHTML = state.history.map(h=>`<div><span>${h.label}</span><strong>${h.value}</strong></div>`).join('');
+  }
+
+  // ====== Theme ======
+  function applyTheme(){
+    const app = $('#app');
+    app.setAttribute('data-theme', state.theme);
+    $('#themeToggle').checked = state.theme==='light';
+    store.set('theme', state.theme);
+  }
+
+  // ====== Calculator Renderers ======
+  function renderStandard(){
+    return `
+    <div class="card half">
+      <h3>Display</h3>
+      <div class="display" id="std-display">0</div>
+      <div class="note">Use keyboard too: 0‑9, +‑×÷, Enter, Backspace.</div>
+    </div>
+    <div class="card half">
+      <h3>Keypad</h3>
+      <div class="keypad" id="std-keys"></div>
+    </div>
+    <div class="card half">
+      <h3>Memory</h3>
+      <div class="illus">${svgChip()}${svgBrain()}${svgSpark()}</div>
+      <div class="row" style="margin-top:10px">
+        <div class="field half"><button class="btn" id="mPlus">M+</button></div>
+        <div class="field half"><button class="btn" id="mMinus">M-</button></div>
+        <div class="field half"><button class="btn" id="mRecall">MR</button></div>
+        <div class="field half"><button class="btn" id="mClear">MC</button></div>
+      </div>
+      <div class="note" id="mStatus">Memory: 0</div>
+    </div>
+    <div class="card half">
+      <h3>History</h3>
+      <div class="history" id="historyBox"></div>
+    </div>`;
+  }
+
+  function renderScientific(){
+    const fnKeys = ['sin','cos','tan','log','ln','√','^','!','π','e'];
+    return `
+    <div class="card half">
+      <h3>Scientific Functions</h3>
+      <div class="row">
+        <div class="field"><input id="sci-input" placeholder="Enter expression, e.g., 2*sin(30)+log(100)" /></div>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <div class="field"><div class="keypad" id="sci-keys"></div></div>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <div class="field"><button class="btn primary" id="sci-eval">Evaluate</button> <span class="pill">deg mode</span> <label style="margin-left:8px"><input type="checkbox" id="radToggle"/> radians</label></div>
+      </div>
+      <div class="display" id="sci-display" style="margin-top:8px">Result: 0</div>
+      <div class="note">Supported: + - * / ^ ( ) sin cos tan log ln sqrt ! π e</div>
+    </div>
+    <div class="card half">
+      <h3>Quick Constants & Visuals</h3>
+      <div class="illus">${svgFormula()}${svgGraph()}${svgAtom()}</div>
+      <div class="note">Tap buttons to insert symbols into the input.</div>
+    </div>`;
+  }
+
+  function renderUnit(){
+    return `
+    <div class="card half">
+      <h3>Unit Converter</h3>
+      <div class="row">
+        <div class="field half"><label>Category</label>
+          <select id="u-cat">
+            <option value="length">Length</option>
+            <option value="weight">Weight</option>
+            <option value="temp">Temperature</option>
+          </select>
+        </div>
+        <div class="field half"><label>Value</label><input id="u-val" type="number" placeholder="Enter value" /></div>
+        <div class="field half"><label>From</label><select id="u-from"></select></div>
+        <div class="field half"><label>To</label><select id="u-to"></select></div>
+        <div class="field half"><button class="btn primary" id="u-conv">Convert</button></div>
+        <div class="field half"><div class="display" id="u-out">—</div></div>
+      </div>
+    </div>
+    <div class="card half">
+      <h3>Hints</h3>
+      <div class="illus">${svgRuler()}${svgWeight()}${svgThermo()}</div>
+      <div class="note">Length: m, km, cm, inch, ft • Weight: kg, g, lb • Temp: °C, °F, K</div>
+    </div>`;
+  }
+
+  function renderBMI(){
+    return `
+    <div class="card half">
+      <h3>BMI Calculator</h3>
+      <div class="row">
+        <div class="field half"><label>Height (cm)</label><input id="bmi-h" type="number"/></div>
+        <div class="field half"><label>Weight (kg)</label><input id="bmi-w" type="number"/></div>
+        <div class="field half"><button class="btn primary" id="bmi-calc">Calculate</button></div>
+        <div class="field half"><div class="display" id="bmi-out">—</div></div>
+      </div>
+      <div class="note">Categories: <span style="color:var(--bad)">Under 18.5</span> underweight • 18.5–24.9 healthy • 25–29.9 overweight • <span style="color:var(--bad)">30+</span> obese</div>
+    </div>
+    <div class="card half">
+      <h3>Wellness</h3>
+      <div class="illus">${svgHeart()}${svgRun()}${svgLeaf()}</div>
+    </div>`;
+  }
+
+  function renderEMI(){
+    return `
+    <div class="card half">
+      <h3>EMI (Loan) Calculator</h3>
+      <div class="row">
+        <div class="field half"><label>Principal (₹)</label><input id="emi-p" type="number"/></div>
+        <div class="field half"><label>Annual Interest (%)</label><input id="emi-r" type="number" step="0.01"/></div>
+        <div class="field half"><label>Tenure (months)</label><input id="emi-n" type="number"/></div>
+        <div class="field half"><button class="btn primary" id="emi-calc">Compute EMI</button></div>
+        <div class="field half"><div class="display" id="emi-out">—</div></div>
+      </div>
+      <div class="note">Formula: EMI = P r (1+r)^n / ((1+r)^n − 1), r = monthly rate.</div>
+    </div>
+    <div class="card half">
+      <h3>Tips</h3>
+      <div class="illus">${svgBank()}${svgChart()}${svgShield()}</div>
+    </div>`;
+  }
+
+  function renderAge(){
+    return `
+    <div class="card half">
+      <h3>Age Calculator</h3>
+      <div class="row">
+        <div class="field half"><label>Date of Birth</label><input id="age-dob" type="date"/></div>
+        <div class="field half"><button class="btn primary" id="age-calc">Calculate</button></div>
+        <div class="field"><div class="display" id="age-out">—</div></div>
+      </div>
+    </div>
+    <div class="card half">
+      <h3>Fun Fact</h3>
+      <div class="illus">${svgClock()}${svgSpark()}${svgCake()}</div>
+    </div>`;
+  }
+
+  function renderPercent(){
+    return `
+    <div class="card half">
+      <h3>Percentage Toolkit</h3>
+      <div class="row">
+        <div class="field half"><label>Base</label><input id="pct-base" type="number"/></div>
+        <div class="field half"><label>%</label><input id="pct-rate" type="number"/></div>
+        <div class="field half"><button class="btn" id="pct-of">X% of Base</button></div>
+        <div class="field half"><button class="btn" id="pct-inc">Increase</button></div>
+        <div class="field half"><button class="btn" id="pct-dec">Decrease</button></div>
+        <div class="field half"><div class="display" id="pct-out">—</div></div>
+      </div>
+    </div>
+    <div class="card half">
+      <h3>Visual</h3>
+      <div class="illus">${svgDonut()}${svgBar()}${svgSpark()}</div>
+    </div>`;
+  }
+
+  function renderGST(){
+    return `
+    <div class="card half">
+      <h3>GST (India)</h3>
+      <div class="row">
+        <div class="field half"><label>Amount (₹)</label><input id="gst-amt" type="number"/></div>
+        <div class="field half"><label>GST Rate (%)</label>
+          <select id="gst-rate">
+            <optio
